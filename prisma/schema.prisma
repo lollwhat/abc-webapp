@@ -11,3 +11,67 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Course {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  name        String
+  description String?
+  students    Student[]
+  subjects    CourseSubject[]
+}
+
+model Student {
+  id       Int    @id @default(autoincrement())
+  name     String
+  courseId Int
+  course   Course @relation(fields: [courseId], references: [id])
+  enrolment Enrolment[]
+}
+
+model Subject {
+  id       Int    @id @default(autoincrement())
+  code     String @unique
+  name     String
+  description String?
+  creditHours Int
+  courses CourseSubject[]
+  enrolment Enrolment[]
+}
+
+model Semester {
+  id Int @id @default(autoincrement())
+  name String @unique
+  startDate DateTime
+  endDate DateTime
+  enrolment Enrolment[]
+}
+
+model CourseSubject {
+  id Int @id @default(autoincrement())
+  courseId Int
+  subjectId Int
+  course Course @relation(fields: [courseId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  @@unique([courseId, subjectId])
+}
+
+enum Status {
+  REGISTERED
+  DROPPED
+  COMPLETED
+}
+
+model Enrolment {
+  id Int @id @default(autoincrement())
+  studentId Int
+  subjectId Int
+  semesterId Int
+  EnrolmentStatus Status @default(REGISTERED)
+  registeredAt DateTime @default(now())
+  dropDate DateTime?
+  student Student @relation(fields: [studentId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  semester Semester @relation(fields: [semesterId], references: [id])
+  @@unique([studentId, subjectId, semesterId])
+}
