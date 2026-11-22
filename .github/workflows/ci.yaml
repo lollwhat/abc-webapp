@@ -1,0 +1,39 @@
+name: CI - Build & Lint Check
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-lint:
+    name: Build, Lint & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma7 generate
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build Next.js application
+        run: npm run build
+        env:
+          # Prisma/Next.js sometimes checks that DATABASE_URL exists during build.
+          # If you don't have a cloud DB yet, a dummy string prevents build crashes
+          # as long as no page queries the DB at static build time.
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://dummy:dummy@localhost:5432/dummy' }}
